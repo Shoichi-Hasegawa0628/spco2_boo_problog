@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+    <node name="human_commander" pkg="spco_mlda_problog_related" type="human_commander.py" output="screen" cwd="node" />
+    
+    
+</launch>
