@@ -5,135 +5,149 @@
 
 # Standard Library
 import csv
+import os
 
 # Third Party
-from scipy.stats import dirichlet                                                                           #ディリクレ分布を使用するためのライブラリ
-from scipy.stats import multinomial                                                                         #カテゴリ分布と多項分布を使用するためのライブラリ (多項は複数試行)
-from scipy import stats
 import numpy as np
 import roslib.packages
 import rospy
 from std_msgs.msg import String
 
-class CrossModalObject2Place():
 
+class CrossModalObject2Place():
     def __init__(self):
-        self.object_name = 0
-        self.spco_params_path = str(roslib.packages.get_pkg_dir("rgiro_spco2_slam")) + "/data/output/test/max_likelihood_param/"
-        self.mlda_params_path = 0
         pass
 
-    def word_callback(self):
+    def word_callback(self, object_name):
+        # word = rospy.wait_for_message("/human_command", String, timeout=None)
+        # target_name = word.data
+        target_name = object_name
+        # print(target_name)
+        # target_name = "cup"
+        prob = self.cross_modal_inference(target_name)
+        return prob
+
+    def read_data(self):
+        ## データの読み込み
+        # π^s
+        with open('./param/pi.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+        pi_s_data = row
+        del pi_s_data[-1]
+        pi = np.array(pi_s_data, dtype=np.float64)
+        # print("pi_s :{}\n".format(pi))
+
+        # ξ
+        xi = []
+        with open('./param/Xi.csv') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                del row[-1]
+                xi.append(np.array(row, dtype=np.float64))
+        xi = np.array(xi)
+        # print("xi: {}\n".format(xi))
+
+        # θ^sw
+        theta_sw = []
+        with open('./param/W.csv') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                del row[-1]
+                theta_sw.append(np.array(row, dtype=np.float64))
+        # print("theta_sw: {}\n".format(theta_sw))
+
+        # 場所の単語辞書
+        with open('./param/W_list.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            place_name_list = row
+            del place_name_list[-1]
+        # print(place_name_list)
+
+        # 物体の単語辞書
+        with open('./param/Object_W_list.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            object_name_list = row
+            # del object_name_list[-1]
+        # print(object_name_list)
+        return pi, xi, theta_sw, object_name_list, place_name_list
+
+    def save_data(self, prob, place_name, object_name, place_name_list):
+        # 推論結果をtxtでまとめて保存
+        FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
+        if not os.path.exists(FilePath):
+            os.makedirs(FilePath)
+        with open(FilePath + "/inference_result.txt", "w") as f:
+            f.write("Result of inference:\n")
+            f.write("{} = {}\n".format(place_name_list, prob))
+            f.write("Most likely place name is {}\n".format(place_name))
+            f.close()
+
+        # probLogに活用するためにprobだけcsvで保存
+        with open(FilePath + "/prob.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(prob)
+
+    def cross_modal_inference(self, target_name):
+        pi, xi, theta_sw, object_name_list, place_name_list = self.read_data()
+
         """
-        word = rospy.wait_for_message("/human_command", String, timeout=None)
-        object_name = word.data
-        print(object_name)
-        self.object_name = object_name
+        w^sのクロスモーダル推論
+        P((w^s)_t | o_t) = ∫ P((w^s)_t | (C^s)_t) P((C^s)_t | o_t) d(C^s)_t
+        1. P((C^s)_t | o_t) = P((C^s)_t | π^s, o_t, ξ) = P((C^s)_t | π^s) P(o_t | ξ, (C^s)_t)
+        2. P((w^s)_t |(C^s)_t, θ^sw)
+        3. 周辺化した上で結果を出力させる
+        命令された物体の名前と物体の辞書を対応させて、object_name_vectorを生成
         """
 
-        # w_sの伝承サンプリング (10点サンプリング)
-        target_name = ["pig", "doll"]
-        result = []
-        cat_ws_list = []
-        samples = 10
-        for name in range(len(target_name)):
-            #target_name = "pig"
-            
-            for sample in range(samples):
-                # π^oのサンプリング (ディリクレ分布)                                                                #どの物体のトピックが出現するかの確率を表現
-                # (π^o)_1 ~ P( (π^o)_1 | α^o )
-                alpha = np.array([1.0, 1.0, 1.0])
-                pi_o = dirichlet.rvs(alpha, size=1, random_state=None)
-                #print("(pi_o)_1 : {}".format(pi_o)) 
+        target = object_name_list.index(target_name)
+        object_name_vector = np.zeros(24)
+        np.put(object_name_vector, [target], 1)
 
+        prob_w_s_t = [0.0 for i in range(len(theta_sw[0]))]  # 場所の単語リスト作成
+        for w in range(len(theta_sw[0])):
+            for c in range(pi.size):
+                prob = object_name_vector.dot(xi[c].T) * pi[c] * theta_sw[c][w]
+                # P(o_t | xi_c^s) P(C^s | pi) P (w^s | theta^sw_c^s)
+                prob_w_s_t[w] += prob
 
+        prob_w_s_t_r = [float(j) / sum(prob_w_s_t) for j in prob_w_s_t]  # 正規化
+        #print("Result of inference:")
+        #print("{} = {}\n".format(place_name_list, prob_w_s_t_r))
 
-                # (C^o)_tのサンプリング式
-                # P((C^o)_(t,1) | (w^o)_(t,1), θ^(o,w), (π^o)_1) ∝ P( (C^o)_(t,1) | (π^o)_1 ) P( (w^o)_(t,1) | (C^o)_(t,1), θ^(o,w))
-                ## P( (C^o)_(t,1) | (π^o)_1 ) (カテゴリ分布)
-                objct_topic_num = 3
-                object_topic = np.arange(objct_topic_num)
-                co_t_1_k = np.identity(objct_topic_num)
-                cat_co_v1 = multinomial.pmf(x = co_t_1_k, n = 1, p = pi_o)                                          #物体トピックの確率分布
-                co_idx_pre = stats.rv_discrete(name='co_idx_pre', values=(object_topic, cat_co_v1)).rvs(size=1)     #物体のトピック(事前)を一つサンプリング
-                co_idx_pre = co_idx_pre[0]
+        """
+        # 降順で表示するために辞書を作る
+        dic = {}
+        for i in range(len(place_name_list)):
+            dic[place_name_list[i]] = str(prob_w_s_t[i])
+        print(dic)
+        """
 
-                ## P( (w^o)_(t,1) | (C^o)_(t,1), θ^(o,w)) (カテゴリ分布) 
-                #object_dic = 71
-                #wo_t_1_k = np.identity(object_dic)
-                theta_ow_data = np.loadtxt('../data/Pdw[1].txt')
-                with open('../data/word_dic.txt', 'r') as f:
-                    obj_name_list = f.read().split("\n")
-                cat_wo = theta_ow_data[obj_name_list.index(target_name[name]), co_idx_pre]
-                co = cat_co_v1 * cat_wo
-                co = [float(i)/sum(co) for i in co]                                                                  #正規化
-                co_idx_pos = stats.rv_discrete(name='co_idx_pos', values=(object_topic, co)).rvs(size=1)
-                co_idx_pos = co_idx_pos[0]
+        w_s_t = np.argmax(prob_w_s_t_r)
+        #print("Most likely place is {}\n".format(place_name_list[w_s_t], w_s_t))
 
+        prob_sort = sorted(prob_w_s_t_r, reverse=True)
+        """
+        max_place_name_list = []
+        for i in range(len(prob_sort)):
+            max_place_name_list.append()
+        print(max_place_name_list)
+        """
+        #print("Arranged in descending order of probability:")
+        #print("{}\n".format(prob_sort))
 
-
-                # (C^s)_tのサンプリング
-                # P((C^s)_t | (C^o)_(t,1), ξ, π^s) ∝ P((C^s)_t | π^s) P((C^o)_(t,1) | (C^s)_t, ξ)
-                ## P((C^s)_t | π^s) (カテゴリ分布)
-                with open(self.spco_params_path + 'pi.csv', 'r') as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        pass
-                pi_s_data = row
-                del pi_s_data[-1]
-                pi_s = np.array(pi_s_data, dtype = np.float64)
-                place_topic_num = len(pi_s_data)
-                place_topic = np.arange(place_topic_num)                              
-                cs_k = np.identity(place_topic_num)
-                cat_cs = multinomial.pmf(x = cs_k, n = 1, p = pi_s)
-                cs_idx_pre = stats.rv_discrete(name='cs_idx_pre', values=(place_topic, cat_cs)).rvs(size=1)
-                cs_idx_pre = cs_idx_pre[0]
-
-                ## P((C^o)_(t,1) | (C^s)_t, ξ) (カテゴリ分布)
-                #place_dic = 4
-                #co_t_1_k_v2 = np.identity(place_dic)
-                xi = []
-                with open(self.spco_params_path + 'Xi.csv') as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        del row[-1]
-                        xi.append(np.array(row, dtype = np.float64))
-                        #count += 1
-                #print(xi[0][0])                                                     
-                cat_co_v2 = xi[cs_idx_pre][co_idx_pos] 
-                #print(cat_co_v2)
-                cs = cat_cs * cat_co_v2
-                cs = [float(i)/sum(cs) for i in cs]
-                #print(cs)  
-                cs_idx_pos = stats.rv_discrete(name='cs_idx_pos', values=(place_topic, cs)).rvs(size=1)
-                cs_idx_pos = cs_idx_pos[0]
-
-
-
-                # (w^s)_tのサンプリング
-                # P((w^s)_t | (C^s)_t, theta_sw) (カテゴリ分布)
-                place_dic = 4
-                ws_t_k = np.identity(place_dic)
-                theta_sw = []
-                with open(self.spco_params_path + 'W.csv') as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        del row[-1]
-                        theta_sw.append(np.array(row, dtype = np.float64))
-                cat_ws = multinomial.pmf(x = ws_t_k, n = 1, p = theta_sw[cs_idx_pos])
-                cat_ws_list.append(cat_ws)
-            
-            sub_result = (sum(cat_ws_list)) / samples # 10点分の平均を取る
-            result.append(sub_result)
-            cat_ws_list = []
-        final_result = (sum(result)) / len(target_name) # pig_doll, pig, doll分の確率を平均化
-        #print(final_result)
-        return final_result
+        self.save_data(prob_w_s_t_r, place_name_list[w_s_t], target_name, place_name_list)
+        #print(prob_w_s_t_r)
+        return prob_w_s_t_r
 
 
 if __name__ == "__main__":
-    rospy.init_node('cross_modal_object2place')
+    # rospy.init_node('cross_modal_object2place')
     cross_modal = CrossModalObject2Place()
-    cross_modal.word_callback()
-    #rospy.spin()
-
+    # cross_modal.word_callback()
+    # rospy.spin()
