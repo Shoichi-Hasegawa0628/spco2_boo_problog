@@ -82,7 +82,7 @@ class CrossModalObject2Place():
         FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
         if not os.path.exists(FilePath):
             os.makedirs(FilePath)
-        with open(FilePath + "/inference_result.txt", "w") as f:
+        with open(FilePath + "/cross_modal_inference_result.txt", "w") as f:
             f.write("Result of inference:\n")
             f.write("{} = {}\n".format(place_name_list, prob))
             f.write("Most likely place name is {}\n".format(place_name))

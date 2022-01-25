@@ -12,7 +12,8 @@ import os
 
 # Third Party
 import rospy
-import problog_ros_output_prob
+import output_logical_inference
+import output_prior_knowledge
 import cross_modal_object2place
 import numpy as np
 from std_msgs.msg import String
@@ -24,7 +25,8 @@ from __init__ import *
 
 class WeightAverageProbability():
     def __init__(self):
-        self.logical = problog_ros_output_prob.LogicalInference()
+        self.prior_knowledge = output_prior_knowledge.OutputPriorKnowledge()
+        self.logical = output_logical_inference.LogicalInference()
         self.cross_modal = cross_modal_object2place.CrossModalObject2Place()
         # self.place_id_pub = rospy.Publisher("/place_id", String, queue_size=10)
         # self.spco_params_path = str(roslib.packages.get_pkg_dir("rgiro_spco2_slam")) + "/data/output/test/max_likelihood_param/"
@@ -34,6 +36,19 @@ class WeightAverageProbability():
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # for i in range(len(objects)):
         target_name = object_name #word.data #objects[i]
+        """
+        # 事前知識の呼び出し
+        prior_probs_rd = []
+        prior_probs = self.prior_knowledge.word_callback(target_name)
+        for i in range(len(prior_probs)):
+            prior_probs_rd.append(round(prior_probs[i], 2))
+        #problog_probs_rd = round(problog_probs, 2)
+        #print("< ProbLog Result >")
+        #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
+        #print("****************************************************************\n")
+        """
+
+        
         # Problogの呼び出し
         #print("ProbLog Start")
         problog_probs_rd = []
@@ -61,15 +76,16 @@ class WeightAverageProbability():
 
 
         # 重み平均
-        #weight_average_probs = (problog_probs + cross_modal_probs) * eta
-        weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs))
+        # weight_average_probs = cross_modal_probs # SpCo
+        # weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
+        weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
         weight_average_probs_rd = []
         for i in range(len(weight_average_probs)):
             weight_average_probs_rd.append(round(weight_average_probs[i], 2))
         #weight_average_probs_rd = [round(weight_average_probs[i], 2) for i in weight_average_probs]
         #weight_average_probs_rd = round(weight_average_probs, 2)
         #print(sum(weight_average_probs))
-        print("< Weight average processing Result (weight is 0.17) >")
+        print("< Weight average processing Result >")
         print("[living, bedroom, kitchen, bathroom] = {}".format(weight_average_probs_rd))
         print("****************************************************************\n")
 
@@ -98,17 +114,20 @@ class WeightAverageProbability():
         print("Max Probability: {}\n".format(max_prob))
         # return target_place_id
 
+        """
         weight_sort = sorted(weight_average_probs_rd, reverse=True)
         print("Arranged in descending order of probability:")
         print("{} = {}\n".format(["1st: living", "2nd: bedroom", "3rd: kitchen", "4th: bathroom"], weight_sort))
+        """
         self.save_data(weight_average_probs_rd, place_name_list, target_name)
+        return
 
     def save_data(self, prob, place_name_list, object_name):
         # 推論結果をtxtでまとめて保存
         FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
         if not os.path.exists(FilePath):
             os.makedirs(FilePath)
-        with open(FilePath + "/inference_result.txt", "w") as f:
+        with open(FilePath + "/weight_average_inference_result.txt", "w") as f:
             f.write("Result of inference:\n")
             f.write("{} = {}\n".format(place_name_list, prob))
             f.close()

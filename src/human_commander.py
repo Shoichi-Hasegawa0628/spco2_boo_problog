@@ -17,6 +17,7 @@ cross_modal_object2place_func = cross_modal_object2place.CrossModalObject2Place(
 weight_average_func = weight_average.WeightAverageProbability()
 # import randomization_selection
 # random_select_func = randomization_selection.RandomizationSelection()
+from __init__ import *
 
 class EnterCommand():
     def __init__(self):
@@ -52,8 +53,8 @@ class EnterCommand():
         # TeachingText = self.name[n]
         # TeachingText = "pig_doll"
         # print(TeachingText)
-        step = 1
-        TeachingText = input("Please input object word : \n")
+        # step = 1
+        # TeachingText = input("Please input object word : \n")
 
         """
         if (get_key == "spawn"):
@@ -66,38 +67,43 @@ class EnterCommand():
             break
         print("The command is different, please enter the correct command.\n")
         """
-        print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
-        weight_average_func.execute_weight_average(TeachingText)
-        # cross_modal_object2place_func.word_callback(TeachingText)
-        # random_select_func.selection(TeachingText)
-        FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(TeachingText)
-        if not os.path.exists(FilePath):
-            os.makedirs(FilePath)
-        # while not rospy.is_shutdown():
-        #     self.pub.publish(TeachingText)
+        for i in range(len(objects)):
+            TeachingText = objects[i]
+            print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
+            weight_average_func.execute_weight_average(TeachingText)
+            # cross_modal_object2place_func.word_callback(TeachingText)
+            # random_select_func.selection(TeachingText)
 
-        while True:
-            Next_step = input("Please input start : \n")
-
-            bb = rospy.wait_for_message('/yolov5_ros/output/bounding_boxes', BoundingBoxes, timeout=15)
-            detect_object_info = bb.bounding_boxes
-            img = rospy.wait_for_message('/yolov5_ros/output/image/compressed', CompressedImage, timeout=15)
-            detect_img = self.cv_bridge.compressed_imgmsg_to_cv2(img)
-            cv2.imwrite(FilePath + "/detect_image_" + str(step) + ".jpg", detect_img)
-            object_list = self.extracting_label(detect_object_info)
-            print(object_list)
-            j = TeachingText in object_list
-            if j == True:
-                print("Target Found!!!\n")
+            """
+            FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(TeachingText)
+            if not os.path.exists(FilePath):
+                os.makedirs(FilePath)
+            
+            # while not rospy.is_shutdown():
+            #     self.pub.publish(TeachingText)
+    
+            while True:
+                Next_step = input("Please input start : \n")
+    
+                bb = rospy.wait_for_message('/yolov5_ros/output/bounding_boxes', BoundingBoxes, timeout=15)
+                detect_object_info = bb.bounding_boxes
+                img = rospy.wait_for_message('/yolov5_ros/output/image/compressed', CompressedImage, timeout=15)
+                detect_img = self.cv_bridge.compressed_imgmsg_to_cv2(img)
+                cv2.imwrite(FilePath + "/detect_image_" + str(step) + ".jpg", detect_img)
+                object_list = self.extracting_label(detect_object_info)
+                print(object_list)
+                j = TeachingText in object_list
+                if j == True:
+                    print("Target Found!!!\n")
+                    self.save_data(step, FilePath, object_list)
+                    break
+    
+                print("Don't Found Target")
                 self.save_data(step, FilePath, object_list)
-                break
-
-            print("Don't Found Target")
-            self.save_data(step, FilePath, object_list)
-            step += 1
-
-        return
-
+                step += 1
+    
+            return
+            """
     def extracting_label(self, detect_object_info):
         object_list = []
         for i in range(len(detect_object_info)):
