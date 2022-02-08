@@ -54,7 +54,11 @@ class EnterCommand():
         # TeachingText = "pig_doll"
         # print(TeachingText)
         # step = 1
-        # TeachingText = input("Please input object word : \n")
+        #TeachingText = input("Please input object word : \n")
+        #print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
+        #return
+        #print(TeachingText)
+
 
         """
         if (get_key == "spawn"):

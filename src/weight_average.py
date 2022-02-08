@@ -36,7 +36,7 @@ class WeightAverageProbability():
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # for i in range(len(objects)):
         target_name = object_name #word.data #objects[i]
-        """
+
         # 事前知識の呼び出し
         prior_probs_rd = []
         prior_probs = self.prior_knowledge.word_callback(target_name)
@@ -46,9 +46,9 @@ class WeightAverageProbability():
         #print("< ProbLog Result >")
         #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
         #print("****************************************************************\n")
-        """
-
         
+
+        """
         # Problogの呼び出し
         #print("ProbLog Start")
         problog_probs_rd = []
@@ -59,7 +59,7 @@ class WeightAverageProbability():
         #print("< ProbLog Result >")
         #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
         #print("****************************************************************\n")
-
+        """
 
         # Cross-modal Inferenceの呼び出し
         #print("SpCoSLAM-MLDA Start")
@@ -77,8 +77,8 @@ class WeightAverageProbability():
 
         # 重み平均
         # weight_average_probs = cross_modal_probs # SpCo
-        # weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
-        weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
+        weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
+        # weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
         weight_average_probs_rd = []
         for i in range(len(weight_average_probs)):
             weight_average_probs_rd.append(round(weight_average_probs[i], 2))
