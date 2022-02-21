@@ -64,8 +64,8 @@ class CrossModalObject2Place():
             for row in reader:
                 pass
             place_name_list = row
-            del place_name_list[-1]
-        # print(place_name_list)
+            #del place_name_list[-1]
+        #print(place_name_list)
 
         # 物体の単語辞書
         with open('./param/Object_W_list.csv', 'r') as f:
@@ -140,6 +140,10 @@ class CrossModalObject2Place():
         """
         #print("Arranged in descending order of probability:")
         #print("{}\n".format(prob_sort))
+        # print(prob_w_s_t_r)
+        # print(place_name_list)
+        # print(target_name)
+        # print(place_name_list)
 
         self.save_data(prob_w_s_t_r, place_name_list[w_s_t], target_name, place_name_list)
         #print(prob_w_s_t_r)

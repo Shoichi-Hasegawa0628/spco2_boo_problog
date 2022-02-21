@@ -1,2 +1,0 @@
-Result of inference:
-['living', 'bedroom', 'kitchen', 'bathroom'] = [0.28, 0.21, 0.29, 0.21]

@@ -11,8 +11,10 @@ from yolo_ros_msgs.msg import BoundingBoxes, BoundingBox
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import os
+import time
 import weight_average
 import cross_modal_object2place
+from std_msgs.msg import Empty, String
 cross_modal_object2place_func = cross_modal_object2place.CrossModalObject2Place()
 weight_average_func = weight_average.WeightAverageProbability()
 # import randomization_selection
@@ -22,31 +24,7 @@ from __init__ import *
 class EnterCommand():
     def __init__(self):
         self.cv_bridge = CvBridge()
-        # self.object_list = []
-        # self.pub = rospy.Publisher('/human_command', String, queue_size=1) ## queue size is not important for sending just one messeage.
-        # self.name = ["blue_cup", "green_cup", "orange_cup","penguin_doll", "pig_doll", "sheep_doll","coffee_bottle", "fruits_bottle", "muscat_bottle"]
-
-
-        """
-        物体の名前一覧 (Problogに依存)
-        
-            cup>>>
-                blue_cup
-				green_cup
-				orange_cup
-
-			doll>>>
-				penguin_doll
-				pig_doll
-				sheep_doll
-			
-            bottle>>>
-				coffee_bottle
-				fruits_bottle
-				muscat_bottle
-        """
-        pass
-
+        self.pub_place_name = rospy.Publisher("/place_name", String, queue_size=10)
 
     def StartPublish(self): 
         # n = random.randint(0, len(self.name)-1)
@@ -54,31 +32,25 @@ class EnterCommand():
         # TeachingText = "pig_doll"
         # print(TeachingText)
         # step = 1
-        #TeachingText = input("Please input object word : \n")
-        #print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
-        #return
-        #print(TeachingText)
 
+        TeachingText = input("Please input object word : \n")
+        print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
+        place_name = weight_average_func.execute_weight_average(TeachingText)
 
-        """
-        if (get_key == "spawn"):
-            print(get_key)
-            spawn_many_model.spawn_model("model")
-            break
-        elif (get_key == "delete"):
-            print(get_key)
-            spawn_many_model.all_delete_model()
-            break
-        print("The command is different, please enter the correct command.\n")
+        for t in range(0, 8, 2):
+            self.pub_place_name.publish(place_name)
+            #time.sleep(1)
+        rospy.signal_shutdown("Finised Inference")
+
         """
         for i in range(len(objects)):
             TeachingText = objects[i]
             print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
             weight_average_func.execute_weight_average(TeachingText)
-            # cross_modal_object2place_func.word_callback(TeachingText)
-            # random_select_func.selection(TeachingText)
+        """
 
-            """
+
+        """
             FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(TeachingText)
             if not os.path.exists(FilePath):
                 os.makedirs(FilePath)
@@ -107,7 +79,7 @@ class EnterCommand():
                 step += 1
     
             return
-            """
+        """
     def extracting_label(self, detect_object_info):
         object_list = []
         for i in range(len(detect_object_info)):

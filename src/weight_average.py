@@ -36,7 +36,7 @@ class WeightAverageProbability():
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # for i in range(len(objects)):
         target_name = object_name #word.data #objects[i]
-
+        """
         # 事前知識の呼び出し
         prior_probs_rd = []
         prior_probs = self.prior_knowledge.word_callback(target_name)
@@ -59,7 +59,7 @@ class WeightAverageProbability():
         #print("< ProbLog Result >")
         #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
         #print("****************************************************************\n")
-        """
+
 
         # Cross-modal Inferenceの呼び出し
         #print("SpCoSLAM-MLDA Start")
@@ -77,8 +77,8 @@ class WeightAverageProbability():
 
         # 重み平均
         # weight_average_probs = cross_modal_probs # SpCo
-        weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
-        # weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
+        #weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
+        weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
         weight_average_probs_rd = []
         for i in range(len(weight_average_probs)):
             weight_average_probs_rd.append(round(weight_average_probs[i], 2))
@@ -86,7 +86,7 @@ class WeightAverageProbability():
         #weight_average_probs_rd = round(weight_average_probs, 2)
         #print(sum(weight_average_probs))
         print("< Weight average processing Result >")
-        print("[living, bedroom, kitchen, bathroom] = {}".format(weight_average_probs_rd))
+        print("[living, bedroom, kitchen] = {}".format(weight_average_probs_rd))
         print("****************************************************************\n")
 
 
@@ -120,7 +120,7 @@ class WeightAverageProbability():
         print("{} = {}\n".format(["1st: living", "2nd: bedroom", "3rd: kitchen", "4th: bathroom"], weight_sort))
         """
         self.save_data(weight_average_probs_rd, place_name_list, target_name)
-        return
+        return place_name_list[target_place_id]
 
     def save_data(self, prob, place_name_list, object_name):
         # 推論結果をtxtでまとめて保存
@@ -131,6 +131,7 @@ class WeightAverageProbability():
             f.write("Result of inference:\n")
             f.write("{} = {}\n".format(place_name_list, prob))
             f.close()
+
 
 
 
@@ -151,6 +152,7 @@ class WeightAverageProbability():
         print("Max Probability: {}\n".format(max_prob))
         return target_place_id
         """
+        return
         
 
 if __name__ == "__main__":
