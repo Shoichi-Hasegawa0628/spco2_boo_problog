@@ -24,7 +24,9 @@ from __init__ import *
 class EnterCommand():
     def __init__(self):
         self.cv_bridge = CvBridge()
-        self.pub_place_name = rospy.Publisher("/place_name", String, queue_size=10)
+        # self.pub_place_name = rospy.Publisher("/place_name", String, queue_size=10)
+        self.end_flag = Empty()
+        self.pub_end_flag = rospy.Publisher("/end_flag", Empty, queue_size=10)
 
     def StartPublish(self): 
         # n = random.randint(0, len(self.name)-1)
@@ -35,10 +37,10 @@ class EnterCommand():
 
         TeachingText = input("Please input object word : \n")
         print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
-        place_name = weight_average_func.execute_weight_average(TeachingText)
+        weight_average_func.execute_weight_average(TeachingText)
 
         for t in range(0, 8, 2):
-            self.pub_place_name.publish(place_name)
+            self.pub_end_flag.publish(self.end_flag)
             #time.sleep(1)
         rospy.signal_shutdown("Finised Inference")
 

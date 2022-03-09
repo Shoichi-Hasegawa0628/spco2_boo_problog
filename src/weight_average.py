@@ -4,11 +4,13 @@
 
 # Standard Library
 import sys
+
 sys.path.append('/root/HSR/catkin_ws/src/problog_ros/src')
-#print (sys.path)
+# print (sys.path)
 import random
 import csv
 import os
+import itertools
 
 # Third Party
 import rospy
@@ -31,11 +33,10 @@ class WeightAverageProbability():
         # self.place_id_pub = rospy.Publisher("/place_id", String, queue_size=10)
         # self.spco_params_path = str(roslib.packages.get_pkg_dir("rgiro_spco2_slam")) + "/data/output/test/max_likelihood_param/"
 
-
     def execute_weight_average(self, object_name):
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # for i in range(len(objects)):
-        target_name = object_name #word.data #objects[i]
+        target_name = object_name  # word.data #objects[i]
         """
         # 事前知識の呼び出し
         prior_probs_rd = []
@@ -46,55 +47,51 @@ class WeightAverageProbability():
         #print("< ProbLog Result >")
         #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
         #print("****************************************************************\n")
-        
-
         """
         # Problogの呼び出し
-        #print("ProbLog Start")
+        # print("ProbLog Start")
         problog_probs_rd = []
         problog_probs = self.logical.word_callback(target_name)
         for i in range(len(problog_probs)):
             problog_probs_rd.append(round(problog_probs[i], 2))
-        #problog_probs_rd = round(problog_probs, 2)
-        #print("< ProbLog Result >")
-        #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
-        #print("****************************************************************\n")
-
+        # problog_probs_rd = round(problog_probs, 2)
+        # print("< ProbLog Result >")
+        # print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
+        # print("****************************************************************\n")
 
         # Cross-modal Inferenceの呼び出し
-        #print("SpCoSLAM-MLDA Start")
+        # print("SpCoSLAM-MLDA Start")
         # rospy.wait_for_message("/human_command", String, timeout=None)
         cross_modal_probs_rd = []
         cross_modal_probs = self.cross_modal.word_callback(target_name)
         for i in range(len(cross_modal_probs)):
             cross_modal_probs_rd.append(round(cross_modal_probs[i], 2))
-        #cross_modal_probs_rd = round(cross_modal_probs, 2)
+        # cross_modal_probs_rd = round(cross_modal_probs, 2)
         # cross_modal_probs = [0.25, 0.25, 0.25, 0.25]
-        #print("< Cross-modal-inference (SpCoSLAM) Result >")
-        #print("[living, bedroom, kitchen, bathroom] = {}".format(cross_modal_probs_rd))
-        #print("****************************************************************\n")
-
+        # print("< Cross-modal-inference (SpCoSLAM) Result >")
+        # print("[living, bedroom, kitchen, bathroom] = {}".format(cross_modal_probs_rd))
+        # print("****************************************************************\n")
 
         # 重み平均
         # weight_average_probs = cross_modal_probs # SpCo
-        #weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
-        weight_average_probs = (eta * np.asarray(problog_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + ProbLog
+        # weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
+        weight_average_probs = (eta * np.asarray(problog_probs)) + (
+                    (1 - eta) * np.asarray(cross_modal_probs))  # SpCo + ProbLog
         weight_average_probs_rd = []
         for i in range(len(weight_average_probs)):
             weight_average_probs_rd.append(round(weight_average_probs[i], 2))
-        #weight_average_probs_rd = [round(weight_average_probs[i], 2) for i in weight_average_probs]
-        #weight_average_probs_rd = round(weight_average_probs, 2)
-        #print(sum(weight_average_probs))
+        # weight_average_probs_rd = [round(weight_average_probs[i], 2) for i in weight_average_probs]
+        # weight_average_probs_rd = round(weight_average_probs, 2)
+        # print(sum(weight_average_probs))
         print("< Weight average processing Result >")
         print("[living, bedroom, kitchen] = {}".format(weight_average_probs_rd))
         print("****************************************************************\n")
-
 
         # 場所の単語一覧をロード
         place_name_list = []
         for line in open('W_list.csv', 'r'):
             itemList = line[:-1].split(',')
-            #if(i == 1):
+            # if(i == 1):
             for j in range(len(itemList)):
                 if (itemList[j] != ""):
                     place_name_list = place_name_list + [itemList[j]]
@@ -120,19 +117,21 @@ class WeightAverageProbability():
         print("{} = {}\n".format(["1st: living", "2nd: bedroom", "3rd: kitchen", "4th: bathroom"], weight_sort))
         """
         self.save_data(weight_average_probs_rd, place_name_list, target_name)
-        return place_name_list[target_place_id]
+        return
+
 
     def save_data(self, prob, place_name_list, object_name):
-        # 推論結果をtxtでまとめて保存
         FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
         if not os.path.exists(FilePath):
             os.makedirs(FilePath)
-        with open(FilePath + "/weight_average_inference_result.txt", "w") as f:
-            f.write("Result of inference:\n")
-            f.write("{} = {}\n".format(place_name_list, prob))
-            f.close()
 
+        save_data = []
+        save_data.append(place_name_list)
+        save_data.append(prob)
 
+        with open(FilePath + "/inference_result.csv", "w") as f:
+            write = csv.writer(f)
+            write.writerows(list(itertools.zip_longest(*save_data, fillvalue='')))
 
 
         """
@@ -153,7 +152,7 @@ class WeightAverageProbability():
         return target_place_id
         """
         return
-        
+
 
 if __name__ == "__main__":
     rospy.init_node('weight_avarage')
