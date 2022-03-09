@@ -49,18 +49,18 @@ class WeightAverageProbability():
         #print("****************************************************************\n")
         """
         # Problogの呼び出し
-        # print("ProbLog Start")
+        print("ProbLog Start")
         problog_probs_rd = []
         problog_probs = self.logical.word_callback(target_name)
         for i in range(len(problog_probs)):
             problog_probs_rd.append(round(problog_probs[i], 2))
         # problog_probs_rd = round(problog_probs, 2)
-        # print("< ProbLog Result >")
-        # print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
-        # print("****************************************************************\n")
+        print("< ProbLog Result >")
+        print("[living, bedroom, kitchen] = {}".format(problog_probs_rd))
+        print("****************************************************************\n")
 
         # Cross-modal Inferenceの呼び出し
-        # print("SpCoSLAM-MLDA Start")
+        print("SpCoSLAM Start")
         # rospy.wait_for_message("/human_command", String, timeout=None)
         cross_modal_probs_rd = []
         cross_modal_probs = self.cross_modal.word_callback(target_name)
@@ -68,9 +68,9 @@ class WeightAverageProbability():
             cross_modal_probs_rd.append(round(cross_modal_probs[i], 2))
         # cross_modal_probs_rd = round(cross_modal_probs, 2)
         # cross_modal_probs = [0.25, 0.25, 0.25, 0.25]
-        # print("< Cross-modal-inference (SpCoSLAM) Result >")
-        # print("[living, bedroom, kitchen, bathroom] = {}".format(cross_modal_probs_rd))
-        # print("****************************************************************\n")
+        print("< Cross-modal-inference (SpCoSLAM) Result >")
+        print("[living, bedroom, kitchen] = {}".format(cross_modal_probs_rd))
+        print("****************************************************************\n")
 
         # 重み平均
         # weight_average_probs = cross_modal_probs # SpCo
@@ -89,7 +89,7 @@ class WeightAverageProbability():
 
         # 場所の単語一覧をロード
         place_name_list = []
-        for line in open('W_list.csv', 'r'):
+        for line in open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r'):
             itemList = line[:-1].split(',')
             # if(i == 1):
             for j in range(len(itemList)):
@@ -131,7 +131,7 @@ class WeightAverageProbability():
 
         with open(FilePath + "/inference_result.csv", "w") as f:
             write = csv.writer(f)
-            write.writerows(list(itertools.zip_longest(*save_data, fillvalue='')))
+            write.writerows(save_data)
 
 
         """

@@ -35,7 +35,8 @@ class EnterCommand():
         # print(TeachingText)
         # step = 1
 
-        TeachingText = input("Please input object word : \n")
+        #TeachingText = input("Please input object word : \n")
+        TeachingText = "penguin_doll"
         print('Command: ' + 'Bring ' + TeachingText + ' for me\n')
         weight_average_func.execute_weight_average(TeachingText)
 
@@ -82,18 +83,20 @@ class EnterCommand():
     
             return
         """
-    def extracting_label(self, detect_object_info):
-        object_list = []
-        for i in range(len(detect_object_info)):
-            object_list.append(detect_object_info[i].Class)
-        return object_list
 
-    def save_data(self, step, FilePath, object_list):
-        with open(FilePath + "/result_" + str(step) + ".txt", "w") as f:
-            f.write("Number of visits:\n")
-            f.write("{}\n".format(step))
-            f.write("{}".format(object_list))
-            f.close()
+
+    # def extracting_label(self, detect_object_info):
+    #     object_list = []
+    #     for i in range(len(detect_object_info)):
+    #         object_list.append(detect_object_info[i].Class)
+    #     return object_list
+    #
+    # def save_data(self, step, FilePath, object_list):
+    #     with open(FilePath + "/result_" + str(step) + ".txt", "w") as f:
+    #         f.write("Number of visits:\n")
+    #         f.write("{}\n".format(step))
+    #         f.write("{}".format(object_list))
+    #         f.close()
 
 if __name__ == '__main__':
     rospy.init_node('enter_human_command', anonymous=False)

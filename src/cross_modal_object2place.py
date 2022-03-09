@@ -30,7 +30,7 @@ class CrossModalObject2Place():
     def read_data(self):
         ## データの読み込み
         # π^s
-        with open('./param/pi.csv', 'r') as f:
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/pi.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
@@ -41,7 +41,7 @@ class CrossModalObject2Place():
 
         # ξ
         xi = []
-        with open('./param/Xi.csv') as f:
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Xi.csv') as f:
             reader = csv.reader(f)
             for row in reader:
                 del row[-1]
@@ -51,7 +51,7 @@ class CrossModalObject2Place():
 
         # θ^sw
         theta_sw = []
-        with open('./param/W.csv') as f:
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W.csv') as f:
             reader = csv.reader(f)
             for row in reader:
                 del row[-1]
@@ -59,7 +59,7 @@ class CrossModalObject2Place():
         # print("theta_sw: {}\n".format(theta_sw))
 
         # 場所の単語辞書
-        with open('./param/W_list.csv', 'r') as f:
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
@@ -68,7 +68,7 @@ class CrossModalObject2Place():
         #print(place_name_list)
 
         # 物体の単語辞書
-        with open('./param/Object_W_list.csv', 'r') as f:
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Object_W_list.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
@@ -117,8 +117,8 @@ class CrossModalObject2Place():
                 prob_w_s_t[w] += prob
 
         prob_w_s_t_r = [float(j) / sum(prob_w_s_t) for j in prob_w_s_t]  # 正規化
-        #print("Result of inference:")
-        #print("{} = {}\n".format(place_name_list, prob_w_s_t_r))
+        # print("Result of inference:")
+        # print("{} = {}\n".format(place_name_list, prob_w_s_t_r))
 
         """
         # 降順で表示するために辞書を作る
