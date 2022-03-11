@@ -1,3 +1,0 @@
-Result of inference:
-['living', 'bedroom', 'kitchen'] = [0.33333333333333337, 0.33333333333333337, 0.33333333333333337]
-Most likely place name is living
