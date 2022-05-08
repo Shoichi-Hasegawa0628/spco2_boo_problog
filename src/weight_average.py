@@ -46,7 +46,6 @@ class WeightAverageProbability():
         #print("< ProbLog Result >")
         #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
         #print("****************************************************************\n")
-        
 
         """
         # Problogの呼び出し
@@ -123,15 +122,28 @@ class WeightAverageProbability():
         return
 
     def save_data(self, prob, place_name_list, object_name):
-        # 推論結果をtxtでまとめて保存
+        # # 推論結果をtxtでまとめて保存
+        # FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
+        # if not os.path.exists(FilePath):
+        #     os.makedirs(FilePath)
+        # with open(FilePath + "/weight_average_inference_result.txt", "w") as f:
+        #     f.write("Result of inference:\n")
+        #     f.write("{} = {}\n".format(place_name_list, prob))
+        #     f.close()
+
         FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
         if not os.path.exists(FilePath):
             os.makedirs(FilePath)
-        with open(FilePath + "/weight_average_inference_result.txt", "w") as f:
-            f.write("Result of inference:\n")
-            f.write("{} = {}\n".format(place_name_list, prob))
-            f.close()
 
+        save_data = []
+        save_data.append(place_name_list)
+        save_data.append(prob)
+
+        with open(FilePath + "/inference_result.csv", "w") as f:
+            write = csv.writer(f)
+            write.writerows(save_data)
+
+        return
 
 
         """
