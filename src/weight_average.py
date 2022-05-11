@@ -37,45 +37,89 @@ class WeightAverageProbability():
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # for i in range(len(objects)):
         target_name = object_name  # word.data #objects[i]
-        """
+
+        #　場所の単語情報の読み込み
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            place_name_list_s = row
+        place_name_list_s.pop(-1)
+
+        problog_probs_r = [0 for i in range(len(place_name_list_s))]  # 場所概念の単語数に合わせた表現 (論理推論)
+        prior_probs_r = [0 for i in range(len(place_name_list_s))]  # 場所概念の単語数に合わせた表現 (Prior)
+
+        place_name_list_l = ["living", "kitchen", "bedroom", "bathroom", "entrance", "study_room"]
+
+
         # 事前知識の呼び出し
         prior_probs_rd = []
         prior_probs = self.prior_knowledge.word_callback(target_name)
-        for i in range(len(prior_probs)):
-            prior_probs_rd.append(round(prior_probs[i], 2))
+        # print(prior_probs)
+
+        # 場所の単語の呼び出し for文ではじめる
+        # 場所の単語のindexを調べる
+        # print(place_name_list_s[0])
+        # print(place_name_list_l[0])
+        # print(place_name_list_s[0] in place_name_list_l)
+
+        for j in range(len(place_name_list_s)):
+            if ((place_name_list_s[j] in place_name_list_l) == True):
+                a = place_name_list_l.index(place_name_list_s[j])
+                prior_probs_r[j] = prior_probs[a]
+            else:
+                prior_probs_r[j] = 0
+        #
+        # for i in range(len(prior_probs)):
+        #     prior_probs_rd.append(round(prior_probs[i], 2))
         #problog_probs_rd = round(problog_probs, 2)
-        #print("< ProbLog Result >")
-        #print("[living, bedroom, kitchen, bathroom] = {}".format(problog_probs_rd))
-        #print("****************************************************************\n")
-        """
+        print("< Prior Result >")
+        print("{} = {}".format(place_name_list_s, prior_probs_r))
+        print("****************************************************************\n")
+        # print(sum(prior_probs_r))
+
         # Problogの呼び出し
         print("ProbLog Start")
         problog_probs_rd = []
         problog_probs = self.logical.word_callback(target_name)
-        for i in range(len(problog_probs)):
-            problog_probs_rd.append(round(problog_probs[i], 2))
+        # print(problog_probs)
+
+        # 場所の単語の呼び出し for文ではじめる
+        # 場所の単語のindexを調べる
+        for j in range(len(place_name_list_s)):
+            if ((place_name_list_s[j] in place_name_list_l) == True):
+                a = place_name_list_l.index(place_name_list_s[j])
+                problog_probs_r[j] = problog_probs[a]
+            else:
+                problog_probs_r[j] = 0
+
+        # for i in range(len(problog_probs)):
+        #     problog_probs_rd.append(round(problog_probs[i], 2))
         # problog_probs_rd = round(problog_probs, 2)
         print("< ProbLog Result >")
-        print("[living, bedroom, kitchen] = {}".format(problog_probs_rd))
+        print("{} = {}".format(place_name_list_s, problog_probs_r))
         print("****************************************************************\n")
+        # print(sum(problog_probs_r))
 
         # Cross-modal Inferenceの呼び出し
         print("SpCoSLAM Start")
         # rospy.wait_for_message("/human_command", String, timeout=None)
         cross_modal_probs_rd = []
         cross_modal_probs = self.cross_modal.word_callback(target_name)
+        print(cross_modal_probs)
         for i in range(len(cross_modal_probs)):
             cross_modal_probs_rd.append(round(cross_modal_probs[i], 2))
         # cross_modal_probs_rd = round(cross_modal_probs, 2)
         # cross_modal_probs = [0.25, 0.25, 0.25, 0.25]
         print("< Cross-modal-inference (SpCoSLAM) Result >")
-        print("[living, bedroom, kitchen] = {}".format(cross_modal_probs_rd))
+        print("{} = {}".format(place_name_list_s, cross_modal_probs_rd))
         print("****************************************************************\n")
+        # print(sum(cross_modal_probs))
 
         # 重み平均
         # weight_average_probs = cross_modal_probs # SpCo
         # weight_average_probs = (eta * np.asarray(prior_probs)) + ((1 - eta) * np.asarray(cross_modal_probs)) # SpCo + Prior
-        weight_average_probs = (eta * np.asarray(problog_probs)) + (
+        weight_average_probs = (eta * np.asarray(problog_probs_r)) + (
                     (1 - eta) * np.asarray(cross_modal_probs))  # SpCo + ProbLog
         weight_average_probs_rd = []
         for i in range(len(weight_average_probs)):
@@ -84,31 +128,32 @@ class WeightAverageProbability():
         # weight_average_probs_rd = round(weight_average_probs, 2)
         # print(sum(weight_average_probs))
         print("< Weight average processing Result >")
-        print("[living, bedroom, kitchen] = {}".format(weight_average_probs_rd))
+        print("{} = {}".format(place_name_list_s, weight_average_probs_rd))
         print("****************************************************************\n")
+        # print(sum(weight_average_probs))
 
-        # 場所の単語一覧をロード
-        place_name_list = []
-        for line in open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r'):
-            itemList = line[:-1].split(',')
-            # if(i == 1):
-            for j in range(len(itemList)):
-                if (itemList[j] != ""):
-                    place_name_list = place_name_list + [itemList[j]]
+        # # 場所の単語一覧をロード
+        # place_name_list = []
+        # for line in open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r'):
+        #     itemList = line[:-1].split(',')
+        #     # if(i == 1):
+        #     for j in range(len(itemList)):
+        #         if (itemList[j] != ""):
+        #             place_name_list = place_name_list + [itemList[j]]
+        #
+        # # 最大確率が同一の場合は、いずれかをランダムに選択 (重み)
+        # max_prob = max(weight_average_probs_rd)
+        # max_probs_idxs = np.where(weight_average_probs_rd == max_prob)
+        # max_probs_idx = max_probs_idxs[0]
+        #
+        # if len(max_probs_idx) > 1:
+        #     print("Multiple max probability !")
+        #     target_place_id = max_probs_idx[random.randrange(len(max_probs_idx))]
+        # else:
+        #     target_place_id = max_probs_idx[0]
 
-        # 最大確率が同一の場合は、いずれかをランダムに選択 (重み)
-        max_prob = max(weight_average_probs_rd)
-        max_probs_idxs = np.where(weight_average_probs_rd == max_prob)
-        max_probs_idx = max_probs_idxs[0]
-
-        if len(max_probs_idx) > 1:
-            print("Multiple max probability !")
-            target_place_id = max_probs_idx[random.randrange(len(max_probs_idx))]
-        else:
-            target_place_id = max_probs_idx[0]
-
-        print("Target Place Name: {}\n".format(place_name_list[target_place_id]))
-        print("Max Probability: {}\n".format(max_prob))
+        # print("Target Place Name: {}\n".format(place_name_list[target_place_id]))
+        # print("Max Probability: {}\n".format(max_prob))
         # return target_place_id
 
         """
@@ -116,8 +161,8 @@ class WeightAverageProbability():
         print("Arranged in descending order of probability:")
         print("{} = {}\n".format(["1st: living", "2nd: bedroom", "3rd: kitchen", "4th: bathroom"], weight_sort))
         """
-        self.save_data(weight_average_probs_rd, place_name_list, target_name)
-        return
+        # self.save_data(weight_average_probs_rd, place_name_list, target_name)
+        return weight_average_probs
 
 
     def save_data(self, prob, place_name_list, object_name):
@@ -157,7 +202,7 @@ class WeightAverageProbability():
 if __name__ == "__main__":
     rospy.init_node('weight_avarage')
     weight_average = WeightAverageProbability()
-    place_id = weight_average.execute_weight_average()
+    probs = weight_average.execute_weight_average("pig_doll")
 
     # r = rospy.Rate(10)
     # while not rospy.is_shutdown():

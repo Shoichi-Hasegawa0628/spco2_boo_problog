@@ -13,26 +13,33 @@ import roslib.packages
 import rospy
 from std_msgs.msg import String
 
+import weight_average
+
 
 class CrossModalObject2Place():
     def __init__(self):
-        pass
+        self.weight_ave = weight_average.WeightAverageProbability()
+        self.callback()
 
-    def word_callback(self, object_name):
+    # def callback(self, prob_w_o):
+    def callback(self):
         # word = rospy.wait_for_message("/human_command", String, timeout=None)
         # target_name = word.data
-        target_name = object_name
+        # target_name = object_name
         # print(target_name)
         # target_name = "cup"
-        prob = self.cross_modal_inference(target_name)
-        return prob
+        prob_w_o = self.weight_ave.execute_weight_average("pig_doll")
+        # prob_w_o = [1/221 for i in range(221)] #ダミー
+        self.cross_modal_inference(prob_w_o)
+
+        return
 
     def read_data(self):
         ## データの読み込み
         ## 必要なもの P (i_t | w_t)：W, pi, Φ, W_list
         ## 必要なもの P (w_t | O_t)：論理推論の結果 or Priorの結果 or クロスモーダル推論 (pi, ξ, W, W_list, Object_W_list)
 
-        # π^s
+        # π
         with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/pi.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
@@ -43,16 +50,16 @@ class CrossModalObject2Place():
         # print("pi_s :{}\n".format(pi))
 
         # ξ
-        xi = []
-        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Xi.csv') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                del row[-1]
-                xi.append(np.array(row, dtype=np.float64))
-        xi = np.array(xi)
+        # xi = []
+        # with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Xi.csv') as f:
+        #     reader = csv.reader(f)
+        #     for row in reader:
+        #         del row[-1]
+        #         xi.append(np.array(row, dtype=np.float64))
+        # xi = np.array(xi)
         # print("xi: {}\n".format(xi))
 
-        # θ^sw
+        # W
         theta_sw = []
         with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W.csv') as f:
             reader = csv.reader(f)
@@ -61,96 +68,96 @@ class CrossModalObject2Place():
                 theta_sw.append(np.array(row, dtype=np.float64))
         # print("theta_sw: {}\n".format(theta_sw))
 
+        # Φ
+        phi = []
+        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/phi.csv') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                del row[-1]
+                phi.append(np.array(row, dtype=np.float64))
+        phi = np.array(phi)
+        # print("phi: {}\n".format(phi))
+
         # 場所の単語辞書
         with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/W_list.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
             place_name_list = row
-            #del place_name_list[-1]
-        #print(place_name_list)
+            # del place_name_list[-1]
+        # print(place_name_list)
 
         # 物体の単語辞書
-        with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Object_W_list.csv', 'r') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                pass
-            object_name_list = row
-            # del object_name_list[-1]
+        # with open('/root/HSR/catkin_ws/src/spco2_boo_problog/src/param/Object_W_list.csv', 'r') as f:
+        #     reader = csv.reader(f)
+        #     for row in reader:
+        #         pass
+        #     object_name_list = row
+        # del object_name_list[-1]
         # print(object_name_list)
-        return pi, xi, theta_sw, object_name_list, place_name_list
+        return pi, theta_sw, phi, place_name_list
 
-    def save_data(self, prob, place_name, object_name, place_name_list):
-        # 推論結果をtxtでまとめて保存
-        FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
-        if not os.path.exists(FilePath):
-            os.makedirs(FilePath)
-        with open(FilePath + "/cross_modal_inference_result.txt", "w") as f:
-            f.write("Result of inference:\n")
-            f.write("{} = {}\n".format(place_name_list, prob))
-            f.write("Most likely place name is {}\n".format(place_name))
-            f.close()
+    # def save_data(self, prob, place_name, object_name, place_name_list):
+    #     # 推論結果をtxtでまとめて保存
+    #     FilePath = "/root/HSR/catkin_ws/src/spco2_boo_problog/data/" + str(object_name)
+    #     if not os.path.exists(FilePath):
+    #         os.makedirs(FilePath)
+    #     with open(FilePath + "/cross_modal_inference_result.txt", "w") as f:
+    #         f.write("Result of inference:\n")
+    #         f.write("{} = {}\n".format(place_name_list, prob))
+    #         f.write("Most likely place name is {}\n".format(place_name))
+    #         f.close()
+    #
+    #     # probLogに活用するためにprobだけcsvで保存
+    #     with open(FilePath + "/prob.csv", "w") as f:
+    #         writer = csv.writer(f)
+    #         writer.writerow(prob)
 
-        # probLogに活用するためにprobだけcsvで保存
-        with open(FilePath + "/prob.csv", "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(prob)
-
-    def cross_modal_inference(self, target_name):
-        pi, xi, theta_sw, object_name_list, place_name_list = self.read_data()
-
-        """
-        w^sのクロスモーダル推論
-        P((w^s)_t | o_t) = ∫ P((w^s)_t | (C^s)_t) P((C^s)_t | o_t) d(C^s)_t
-        1. P((C^s)_t | o_t) = P((C^s)_t | π^s, o_t, ξ) = P((C^s)_t | π^s) P(o_t | ξ, (C^s)_t)
-        2. P((w^s)_t |(C^s)_t, θ^sw)
-        3. 周辺化した上で結果を出力させる
-        命令された物体の名前と物体の辞書を対応させて、object_name_vectorを生成
-        """
-
-        target = object_name_list.index(target_name)
-        object_name_vector = np.zeros(24)
-        np.put(object_name_vector, [target], 1)
-
-        prob_w_s_t = [0.0 for i in range(len(theta_sw[0]))]  # 場所の単語リスト作成
-        for w in range(len(theta_sw[0])):
-            for c in range(pi.size):
-                prob = object_name_vector.dot(xi[c].T) * pi[c] * theta_sw[c][w]
-                # P(o_t | xi_c^s) P(C^s | pi) P (w^s | theta^sw_c^s)
-                prob_w_s_t[w] += prob
-
-        prob_w_s_t_r = [float(j) / sum(prob_w_s_t) for j in prob_w_s_t]  # 正規化
-        # print("Result of inference:")
-        # print("{} = {}\n".format(place_name_list, prob_w_s_t_r))
+    def cross_modal_inference(self, prob_w_o):
+        pi, theta_sw, phi, place_name_list = self.read_data()
 
         """
-        # 降順で表示するために辞書を作る
-        dic = {}
-        for i in range(len(place_name_list)):
-            dic[place_name_list[i]] = str(prob_w_s_t[i])
-        print(dic)
+        論理推論や重み平均の確率を考慮したP(i_t | O_t) <P(i_t | w_t) = P(i_t | w_t, O_t)を仮定>
+        P(i_t | O_t) = ∑_{w} ( (∫ P(i_t | C_t) P(C_t | w_t) dC_t) * P(w_t | O_t) )
+        1. prob = P(w_t | O_t)
+        2. P(i_t | C_t) = P(i_t | Φ, C_t)
+        3. P(C_t | w_t) = P(w_t | W, C_t) P(C_t | π)
+        4. 周辺化させた結果を出力させる
         """
 
-        w_s_t = np.argmax(prob_w_s_t_r)
-        #print("Most likely place is {}\n".format(place_name_list[w_s_t], w_s_t))
+        prob_i_t_list = []
 
-        prob_sort = sorted(prob_w_s_t_r, reverse=True)
-        """
-        max_place_name_list = []
-        for i in range(len(prob_sort)):
-            max_place_name_list.append()
-        print(max_place_name_list)
-        """
-        #print("Arranged in descending order of probability:")
-        #print("{}\n".format(prob_sort))
-        # print(prob_w_s_t_r)
-        # print(place_name_list)
-        # print(target_name)
-        # print(place_name_list)
+        ## P(i_t | w_t)の計算
+        for i in range(len(theta_sw[0])):
+            place_name_vector = np.zeros(len(theta_sw[0]))
+            np.put(place_name_vector, [i], 1)
 
-        self.save_data(prob_w_s_t_r, place_name_list[w_s_t], target_name, place_name_list)
-        #print(prob_w_s_t_r)
-        return prob_w_s_t_r
+            prob_i_t = [0.0 for i in range(len(phi[0]))] # 位置分布のindexリスト作成
+            for j in range(len(phi[0])):
+                for c in range(pi.size):
+                    prob = place_name_vector.dot(theta_sw[c].T) * pi[c] * phi[c][j]
+                    # P(o_t | xi_c^s) P(C^s | pi) P (w^s | theta^sw_c^s)
+                    prob_i_t[j] += prob
+
+            prob_i_t_r = [float(k) / sum(prob_i_t) for k in prob_i_t] # 正規化
+            # print("Result of inference:")
+            # print("{}\n".format(prob_i_t_r))
+
+            prob_i_t_list.append(prob_i_t_r)
+
+        # print("P(i_t | w_t): {}".format(prob_i_t_list))
+
+
+        ## ∑_{w} P(i_t | w_t) P(w_t | o_t)の計算
+        prob_i_o = [0.0 for i in range(len(phi[0]))] # 位置分布のindexリスト作成
+        for i in range(len(phi[0])):
+            for w in range(len(theta_sw[0])):
+                prob = prob_w_o[w] * prob_i_t_list[w][i]
+                prob_i_o[i] += prob
+
+        prob_i_o_r = [float(k) / sum(prob_i_o) for k in prob_i_o] # 正規化
+        print("P(i_t | O_t): {}".format(prob_i_o_r))
+        return
 
 
 if __name__ == "__main__":

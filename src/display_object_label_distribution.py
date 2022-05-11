@@ -37,7 +37,7 @@ class DisplayObjectLabelDistribution():
                 del row[-1]
                 phi.append(np.array(row, dtype=np.float64))
         phi = np.array(phi)
-        # print("phi: {}\n".format(xi))
+        # print("phi: {}\n".format(phi))
 
         # ξ
         xi = []

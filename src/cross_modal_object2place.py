@@ -97,16 +97,16 @@ class CrossModalObject2Place():
         pi, xi, theta_sw, object_name_list, place_name_list = self.read_data()
 
         """
-        w^sのクロスモーダル推論
-        P((w^s)_t | o_t) = ∫ P((w^s)_t | (C^s)_t) P((C^s)_t | o_t) d(C^s)_t
-        1. P((C^s)_t | o_t) = P((C^s)_t | π^s, o_t, ξ) = P((C^s)_t | π^s) P(o_t | ξ, (C^s)_t)
-        2. P((w^s)_t |(C^s)_t, θ^sw)
+        w_tのクロスモーダル推論
+        P(w_t | o_t) = ∫ P(w_t | C_t) P(C_t | o_t) dC_t
+        1. P(C_t | o_t) = P(C_t | π, o_t, ξ) = P(C_t | π) P(o_t | ξ, C_t)
+        2. P(w_t | C_t, W)
         3. 周辺化した上で結果を出力させる
         命令された物体の名前と物体の辞書を対応させて、object_name_vectorを生成
         """
 
         target = object_name_list.index(target_name)
-        object_name_vector = np.zeros(24)
+        object_name_vector = np.zeros(len(object_name_list))
         np.put(object_name_vector, [target], 1)
 
         prob_w_s_t = [0.0 for i in range(len(theta_sw[0]))]  # 場所の単語リスト作成
@@ -128,10 +128,10 @@ class CrossModalObject2Place():
         print(dic)
         """
 
-        w_s_t = np.argmax(prob_w_s_t_r)
+        # w_s_t = np.argmax(prob_w_s_t_r)
         #print("Most likely place is {}\n".format(place_name_list[w_s_t], w_s_t))
 
-        prob_sort = sorted(prob_w_s_t_r, reverse=True)
+        # prob_sort = sorted(prob_w_s_t_r, reverse=True)
         """
         max_place_name_list = []
         for i in range(len(prob_sort)):
@@ -145,7 +145,7 @@ class CrossModalObject2Place():
         # print(target_name)
         # print(place_name_list)
 
-        self.save_data(prob_w_s_t_r, place_name_list[w_s_t], target_name, place_name_list)
+        # self.save_data(prob_w_s_t_r, place_name_list[w_s_t], target_name, place_name_list)
         #print(prob_w_s_t_r)
         return prob_w_s_t_r
 
