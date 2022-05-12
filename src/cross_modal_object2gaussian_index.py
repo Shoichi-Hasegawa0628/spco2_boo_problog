@@ -136,7 +136,7 @@ class CrossModalObject2Place():
             for j in range(len(phi[0])):
                 for c in range(pi.size):
                     prob = place_name_vector.dot(theta_sw[c].T) * pi[c] * phi[c][j]
-                    # P(o_t | xi_c^s) P(C^s | pi) P (w^s | theta^sw_c^s)
+                    # P(w_t | W_c) P(C | pi) P (i_t | phi_c)
                     prob_i_t[j] += prob
 
             prob_i_t_r = [float(k) / sum(prob_i_t) for k in prob_i_t] # 正規化
