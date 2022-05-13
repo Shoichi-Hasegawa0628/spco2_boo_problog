@@ -128,7 +128,7 @@ class WeightAverageProbability():
         # weight_average_probs_rd = round(weight_average_probs, 2)
         # print(sum(weight_average_probs))
         print("< Weight average processing Result >")
-        print("{} = {}".format(place_name_list_s, weight_average_probs_rd))
+        print("{} = {}".format(place_name_list_s, weight_average_probs))
         print("****************************************************************\n")
         # print(sum(weight_average_probs))
 
@@ -200,7 +200,7 @@ class WeightAverageProbability():
 
 
 if __name__ == "__main__":
-    rospy.init_node('weight_avarage')
+    # rospy.init_node('weight_avarage')
     weight_average = WeightAverageProbability()
     probs = weight_average.execute_weight_average("pig_doll")
 
