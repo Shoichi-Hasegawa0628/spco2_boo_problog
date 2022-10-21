@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
-import japanize_matplotlib
+# import matplotlib
+
+# import japanize_matplotlib
 import seaborn as sns
 import numpy as np
 from matplotlib.legend import Legend
 import pandas as pd
 
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+
 
 #plt.style.use('default')
-sns.set()
-sns.set_style("whitegrid", {'grid.linestyle': '--'})
-sns.set_context("paper", 1, {"lines.linewidth": 1})
+# sns.set()
+# sns.set_style("whitegrid", {'grid.linestyle': '--'})
+# sns.set_context("paper", 1, {"lines.linewidth": 1})
 #sns.set_palette('Set1')
-japanize_matplotlib.japanize()
+# japanize_matplotlib.japanize()
 
 x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 
@@ -63,4 +69,7 @@ plt.ylabel("The number of room visits in object search")
 ax.set_xlim(0, 12)
 ax.set_ylim(1, 4)
 
+plt.savefig("./fig.pdf", bbox_inches="tight")
+plt.savefig("./fig.eps", bbox_inches="tight")
+plt.savefig("./fig.svg", bbox_inches="tight")
 plt.show()
