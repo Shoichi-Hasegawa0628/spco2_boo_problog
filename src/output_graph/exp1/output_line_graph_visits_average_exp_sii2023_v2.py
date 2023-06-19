@@ -8,11 +8,18 @@ import seaborn as sns
 import numpy as np
 from matplotlib.legend import Legend
 import pandas as pd
+import matplotlib as mpl
 
-plt.rcParams['font.family'] = 'Times New Roman'
+
+# plt.rcParams['font.family'] = 'Times New Roman'
+# plt.rcParams['pdf.fonttype'] = 42
+# plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
-
+FONT = {'weight' : 'semibold'}
+mpl.rc('font', **FONT)
 
 #plt.style.use('default')
 # sns.set()
@@ -62,10 +69,10 @@ plt.legend()
 
 
 # 現場学習における部屋の訪問数 [ヶ所]
-plt.xlabel("The number of room visits in learning")
+plt.xlabel("The count of room visits in learning", fontweight='semibold')
 
 # 物体探索における部屋の訪問数 [ヶ所]
-plt.ylabel("The number of room visits in object search")
+plt.ylabel("The count of room visits in object search", fontweight='semibold')
 ax.set_xlim(0, 12)
 ax.set_ylim(1, 4)
 
